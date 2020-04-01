@@ -156,3 +156,31 @@ export const getStorageClassNameByDisk = (vm: VMKind, diskName: string) =>
 export const getNodeSelector = (vm: VMKind) => vm?.spec?.template?.spec?.nodeSelector;
 
 export const getTolerations = (vm: VMKind) => vm?.spec?.template?.spec?.tolerations;
+
+export const getSecretVolumes = (vm: VMKind): string[] =>
+  getVolumes(vm)
+    .filter((vol) => Object.keys(vol).includes('secret'))
+    .map((secretVol) => secretVol.secret.secretName);
+
+export const getConfigmapVolumes = (vm: VMKind): string[] =>
+  getVolumes(vm)
+    .filter((vol) => Object.keys(vol).includes('configMap'))
+    .map((cmVol) => cmVol.configMap.name);
+
+export const getServiceAccountVolumes = (vm: VMKind): string[] =>
+  getVolumes(vm)
+    .filter((vol) => Object.keys(vol).includes('serviceAccount'))
+    .map((saVol) => saVol.serviceAccount.serviceAccountName);
+
+export const getVolumeWithSourceName = (vm: VMKind, sourceName: string) => {
+  return getVolumes(vm).find(
+    (vol) =>
+      (Object.keys(vol).includes('secret') && vol.secret.secretName === sourceName) ||
+      (Object.keys(vol).includes('configMap') && vol.configMap.name === sourceName) ||
+      (Object.keys(vol).includes('serviceAccount') &&
+        vol.serviceAccount.serviceAccountName === sourceName),
+  );
+};
+
+export const getDiskByName = (vm: VMKind, diskName: string) =>
+  getDisks(vm).find((disk) => disk.name === diskName);

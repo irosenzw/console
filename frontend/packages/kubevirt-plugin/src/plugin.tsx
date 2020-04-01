@@ -15,6 +15,7 @@ import {
   ReduxReducer,
   ProjectDashboardInventoryItem,
   DashboardsOverviewResourceActivity,
+  SecretExtention,
 } from '@console/plugin-sdk';
 import { DashboardsStorageCapacityDropdownItem } from '@console/ceph-storage-plugin';
 import { TemplateModel, PodModel } from '@console/internal/models';
@@ -29,6 +30,10 @@ import {
 import kubevirtReducer from './redux';
 
 import './style.scss';
+import { K8sResourceCommon, TemplateKind } from '../../../public/module/k8s/index';
+import { onSecretWorkloadChange } from './utils/secrets';
+import { VMKind } from './types/vm/index';
+import { getEnvDiskSerial, getVMEnvDiskPatches } from './components/vms/vm-environment/selectors';
 
 type ConsumedExtensions =
   | ResourceNSNavItem
@@ -44,7 +49,8 @@ type ConsumedExtensions =
   | DashboardsStorageCapacityDropdownItem
   | ReduxReducer
   | ProjectDashboardInventoryItem
-  | DashboardsOverviewResourceActivity;
+  | DashboardsOverviewResourceActivity
+  | SecretExtention;
 
 export const FLAG_KUBEVIRT = 'KUBEVIRT';
 
@@ -297,6 +303,24 @@ const plugin: Plugin<ConsumedExtensions> = [
         import(
           './components/dashboards-page/overview-dashboard/activity' /* webpackChunkName: "kubevirt-activity" */
         ).then((m) => m.V2VImportActivity),
+    },
+    flags: {
+      required: [FLAG_KUBEVIRT],
+    },
+  },
+  {
+    type: 'Secret/SecretExtenion',
+    properties: {
+      onSecretWorkloadChange: (vm: K8sResourceCommon) => onSecretWorkloadChange(vm as VMKind),
+      getEnvDiskSerial: (vm: K8sResourceCommon, secretName: string) =>
+        getEnvDiskSerial(vm as VMKind, secretName),
+      getVMEnvDiskPatches: (
+        vmObj: K8sResourceCommon,
+        sourceName: string,
+        sourceKind: string,
+        serialNumber: string,
+        vmTemplate?: TemplateKind,
+      ) => getVMEnvDiskPatches(vmObj as VMKind, sourceName, sourceKind, serialNumber, vmTemplate),
     },
     flags: {
       required: [FLAG_KUBEVIRT],
