@@ -17,10 +17,14 @@ import { getLoadedData, getResource } from '../../utils';
 import { VirtualMachineInstanceModel, VirtualMachineModel } from '../../models';
 import { getServicesForVmi } from '../../selectors/service';
 import { VMResourceSummary, VMDetailsList, VMSchedulingList } from './vm-resource';
-import { VMTabProps } from './types';
+import { VMTabProps, IsPendingChange } from './types';
 import { getVMStatus } from '../../statuses/vm/vm-status';
 import { VMStatusBundle } from '../../statuses/vm/types';
 import { isVM, isVMI } from '../../selectors/check-type';
+import { detectNextRunChanges } from './utils';
+import { Alert, AlertVariant, List, ListItem, Button } from '@patternfly/react-core';
+
+import './vm-details.scss';
 
 export const VMDetailsFirehose: React.FC<VMTabProps> = ({
   obj: objProp,
@@ -73,16 +77,58 @@ export const VMDetailsFirehose: React.FC<VMTabProps> = ({
 
 export const VMDetails: React.FC<VMDetailsProps> = (props) => {
   const { kindObj, vm, vmi, pods, vmStatusBundle, templates, ...restProps } = props;
+  const [openBootOrderModal, setOpenBootOrderModal] = React.useState(false);
+  const [openCDROMModal, setOpenCDROMModal] = React.useState(false);
+  const [openFlavorModal, setOpenFlavorModal] = React.useState(false);
 
   const vmiLike = kindObj === VirtualMachineModel ? vm : vmi;
   const vmServicesData = getServicesForVmi(getLoadedData(props.services, []), vmi);
   const canUpdate = useAccessReview(asAccessReview(kindObj, vmiLike || {}, 'patch')) && !!vmiLike;
+  const vmConfChanges = detectNextRunChanges(vm, vmi);
+  const isVMRequireRestart = !!vmi && Object.values(vmConfChanges).some((x) => !!x);
+
+  const openModal = (key) => {
+    switch (key) {
+      case IsPendingChange.flavor:
+        setOpenFlavorModal(true);
+        return;
+      case IsPendingChange.cdroms:
+        setOpenCDROMModal(true);
+        return;
+      case IsPendingChange.bootOrder:
+        setOpenBootOrderModal(true);
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
     <StatusBox data={vmiLike} {...restProps}>
       <ScrollToTopOnMount />
       <div className="co-m-pane__body">
         <SectionHeading text={`${kindObj.label} Details`} />
+        {isVMRequireRestart && (
+          <Alert
+            title="Pending Changes"
+            isInline
+            variant={AlertVariant.warning}
+            className="kubevirt-vm-details__pending-changes-class-alert"
+          >
+            <List>
+              {Object.keys(vmConfChanges).map(
+                (key) =>
+                  vmConfChanges[key] && (
+                    <ListItem key={key}>
+                      <Button onClick={() => openModal(key)} isInline variant="link">
+                        {key}
+                      </Button>
+                    </ListItem>
+                  ),
+              )}
+            </List>
+          </Alert>
+        )}
         <div className="row">
           <div className="col-sm-6">
             <VMResourceSummary
@@ -101,6 +147,10 @@ export const VMDetails: React.FC<VMDetailsProps> = (props) => {
               vmi={vmi}
               pods={pods}
               vmStatusBundle={vmStatusBundle}
+              openBootOrderModal={openBootOrderModal}
+              openCDROMModal={openCDROMModal}
+              setOpenBootOrderModal={setOpenBootOrderModal}
+              setOpenCDROMModal={setOpenCDROMModal}
             />
           </div>
         </div>
@@ -108,7 +158,14 @@ export const VMDetails: React.FC<VMDetailsProps> = (props) => {
       <div className="co-m-pane__body">
         <SectionHeading text="Scheduling and resources requirements" />
         <div className="row">
-          <VMSchedulingList kindObj={kindObj} canUpdateVM={canUpdate} vm={vm} vmi={vmi} />
+          <VMSchedulingList
+            kindObj={kindObj}
+            canUpdateVM={canUpdate}
+            vm={vm}
+            vmi={vmi}
+            openFlavorModal={openFlavorModal}
+            setOpenFlavorModal={setOpenFlavorModal}
+          />
         </div>
       </div>
       <div className="co-m-pane__body">

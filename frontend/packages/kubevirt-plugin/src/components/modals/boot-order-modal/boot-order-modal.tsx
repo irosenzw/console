@@ -8,11 +8,17 @@ import { k8sPatch } from '@console/internal/module/k8s';
 import { PatchBuilder } from '@console/shared/src/k8s';
 import { BootableDeviceType } from '../../../types';
 import { VMLikeEntityKind } from '../../../types/vmLike';
-import { getVMLikeModel, getDevices } from '../../../selectors/vm';
+import {
+  getVMLikeModel,
+  getDevices,
+  asVM,
+  isVMRunningOrExpectedRunning,
+} from '../../../selectors/vm';
 import { getVMLikePatches } from '../../../k8s/patches/vm-template';
 import { BootOrder, deviceKey } from '../../boot-order';
 import { DeviceType } from '../../../constants';
 import { ModalFooter } from '../modal/modal-footer';
+import { pendingChangesAlert } from '../../vms/utils';
 
 import './boot-order-modal.scss';
 
@@ -146,6 +152,7 @@ const BootOrderModalComponent = ({
     <Modal
       title={title}
       isOpen={isOpen}
+      description={isVMRunningOrExpectedRunning(asVM(vmLikeEntity)) && pendingChangesAlert()}
       isSmall
       onClose={() => setOpen(false)}
       footer={footer}

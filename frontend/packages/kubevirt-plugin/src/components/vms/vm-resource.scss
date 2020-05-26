@@ -1,1 +1,6 @@
 @import "./resource-summary-description";
+
+.kubevirt-vm-details__vm-details-item {
+    padding-left: var(--pf-global--spacer--sm);
+    padding-right: var(--pf-global--spacer--sm);
+  }

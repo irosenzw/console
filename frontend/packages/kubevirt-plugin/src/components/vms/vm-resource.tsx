@@ -44,6 +44,8 @@ import {
 import { VMStatusBundle } from '../../statuses/vm/types';
 
 import './vm-resource.scss';
+import { Button } from '@patternfly/react-core';
+import { detectNextRunChanges } from './utils';
 
 export const VMDetailsItem: React.FC<VMDetailsItemProps> = ({
   title,
@@ -53,12 +55,25 @@ export const VMDetailsItem: React.FC<VMDetailsItemProps> = ({
   idValue,
   isNotAvail = false,
   valueClassName,
+  arePendingChanges,
   children,
 }) => {
   return (
     <>
       <dt>
-        {title} <EditButton id={editButtonId} canEdit={canEdit} onClick={onEditClick} />
+        <span>
+          {title} <EditButton id={editButtonId} canEdit={canEdit} onClick={onEditClick} />
+          {arePendingChanges && (
+            <Button
+              className="kubevirt-vm-details__vm-details-item"
+              variant="link"
+              isInline
+              onClick={onEditClick}
+            >
+              View Pending Changes
+            </Button>
+          )}
+        </span>
       </dt>
       <dd id={idValue} className={valueClassName}>
         {isNotAvail ? <span className="text-secondary">Not available</span> : children}
@@ -120,17 +135,16 @@ export const VMDetailsList: React.FC<VMResourceListProps> = ({
   vmStatusBundle,
   canUpdateVM,
   kindObj,
+  openBootOrderModal = false,
+  openCDROMModal = false,
+  setOpenBootOrderModal,
+  setOpenCDROMModal,
 }) => {
   const [isBootOrderModalOpen, setBootOrderModalOpen] = React.useState<boolean>(false);
-  const isVM = kindObj === VirtualMachineModel;
-  const vmiLike = isVM ? vm : vmi;
+  const vmiLike = !isVMRunningOrExpectedRunning(vm) ? vm : vmi;
   const vmiLikeWrapper = asVMILikeWrapper(vmiLike);
 
-  const canEdit =
-    vmiLike &&
-    canUpdateVM &&
-    kindObj !== VirtualMachineInstanceModel &&
-    !isVMRunningOrExpectedRunning(vm);
+  const canEdit = vmiLike && canUpdateVM && kindObj !== VirtualMachineInstanceModel;
 
   const [isStatusModalOpen, setStatusModalOpen] = React.useState<boolean>(false);
 
@@ -141,6 +155,23 @@ export const VMDetailsList: React.FC<VMResourceListProps> = ({
   const nodeName = getVMINodeName(vmi) || getNodeName(launcherPod);
   const ipAddrs = getVmiIpAddresses(vmi).join(', ');
   const workloadProfile = vmiLikeWrapper?.getWorkloadProfile();
+  const vmConfChanges = detectNextRunChanges(vm, vmi);
+
+  React.useEffect(() => {
+    if (openCDROMModal) {
+      VMCDRomModal({ vmLikeEntity: vm, modalClassName: 'modal-lg' });
+      setOpenCDROMModal(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openCDROMModal]);
+
+  React.useEffect(() => {
+    if (openBootOrderModal) {
+      setBootOrderModalOpen(true);
+      setOpenBootOrderModal(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openBootOrderModal]);
 
   return (
     <dl className="co-m-pane__details">
@@ -171,6 +202,7 @@ export const VMDetailsList: React.FC<VMResourceListProps> = ({
         editButtonId={prefixedID(id, 'boot-order-edit')}
         onEditClick={() => setBootOrderModalOpen(true)}
         idValue={prefixedID(id, 'boot-order')}
+        arePendingChanges={vmConfChanges['Boot Order']}
       >
         <BootOrderModal
           isOpen={isBootOrderModalOpen}
@@ -187,6 +219,7 @@ export const VMDetailsList: React.FC<VMResourceListProps> = ({
         onEditClick={() => VMCDRomModal({ vmLikeEntity: vm, modalClassName: 'modal-lg' })}
         idValue={prefixedID(id, 'cdrom')}
         isNotAvail={cds.length === 0}
+        arePendingChanges={vmConfChanges['CD-ROMs']}
       >
         <DiskSummary disks={cds} vm={vm} />
       </VMDetailsItem>
@@ -223,15 +256,12 @@ export const VMSchedulingList: React.FC<VMSchedulingListProps> = ({
   vmi,
   canUpdateVM,
   kindObj,
+  openFlavorModal = false,
+  setOpenFlavorModal,
 }) => {
-  const isVM = kindObj === VirtualMachineModel;
-  const vmiLike = isVM ? vm : vmi;
+  const vmiLike = !isVMRunningOrExpectedRunning(vm) ? vm : vmi;
   const vmiLikeWrapper = asVMILikeWrapper(vmiLike);
-  const canEdit =
-    vmiLike &&
-    canUpdateVM &&
-    kindObj !== VirtualMachineInstanceModel &&
-    !isVMRunningOrExpectedRunning(vm);
+  const canEdit = vmiLike && canUpdateVM && kindObj !== VirtualMachineInstanceModel;
 
   const id = getBasicID(vmiLike);
   const flavorText = getFlavorText({
@@ -243,6 +273,15 @@ export const VMSchedulingList: React.FC<VMSchedulingListProps> = ({
   const nodeSelector = vmiLikeWrapper?.getNodeSelector();
   const tolerationsWrapperCount = (vmiLikeWrapper?.getTolerations() || []).length;
   const affinityWrapperCount = getRowsDataFromAffinity(vmiLikeWrapper?.getAffinity())?.length;
+  const vmConfChanges = detectNextRunChanges(vm, vmi);
+
+  React.useEffect(() => {
+    if (openFlavorModal) {
+      vmFlavorModal({ vmLike: vm, blocking: true });
+      setOpenFlavorModal(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openFlavorModal]);
 
   return (
     <>
@@ -305,6 +344,7 @@ export const VMSchedulingList: React.FC<VMSchedulingListProps> = ({
             onEditClick={() => vmFlavorModal({ vmLike: vm, blocking: true })}
             editButtonId={prefixedID(id, 'flavor-edit')}
             isNotAvail={!flavorText}
+            arePendingChanges={vmConfChanges.Flavor}
           >
             {flavorText}
           </VMDetailsItem>
@@ -332,6 +372,7 @@ type VMDetailsItemProps = {
   idValue?: string;
   isNotAvail?: boolean;
   valueClassName?: string;
+  arePendingChanges?: boolean;
   children: React.ReactNode;
 };
 
@@ -350,6 +391,10 @@ type VMResourceListProps = {
   vmi?: VMIKind;
   canUpdateVM: boolean;
   vmStatusBundle: VMStatusBundle;
+  openBootOrderModal?: boolean;
+  openCDROMModal?: boolean;
+  setOpenBootOrderModal?: (value: boolean) => void;
+  setOpenCDROMModal?: (value: boolean) => void;
 };
 
 type VMSchedulingListProps = {
@@ -357,4 +402,6 @@ type VMSchedulingListProps = {
   vm?: VMKind;
   vmi?: VMIKind;
   canUpdateVM: boolean;
+  openFlavorModal?: boolean;
+  setOpenFlavorModal?: (value: boolean) => void;
 };

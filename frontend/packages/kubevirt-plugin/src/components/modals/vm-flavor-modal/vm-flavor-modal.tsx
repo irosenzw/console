@@ -23,6 +23,7 @@ import {
   getMemory,
   getVMLikeModel,
   vCPUCount,
+  isVMRunningOrExpectedRunning,
 } from '../../../selectors/vm';
 import { getUpdateFlavorPatches } from '../../../k8s/patches/vm/vm-patches';
 import { CUSTOM_FLAVOR } from '../../../constants';
@@ -40,6 +41,7 @@ import { flavorSort } from '../../../utils/sort';
 import { getTemplateFlavors } from '../../../selectors/vm-template/advanced';
 import { getVMTemplateNamespacedName } from '../../../selectors/vm-template/selectors';
 import { toUIFlavor, isCustomFlavor } from '../../../selectors/vm-like/flavor';
+import { pendingChangesAlert } from '../../vms/utils';
 
 const getId = (field: string) => `vm-flavor-modal-${field}`;
 
@@ -109,6 +111,7 @@ const VMFlavorModal = withHandlePromise((props: VMFlavornModalProps) => {
     <div className="modal-content">
       <ModalTitle>Edit Flavor</ModalTitle>
       <ModalBody>
+        {isVMRunningOrExpectedRunning(vm) && pendingChangesAlert()}
         <Form>
           <FormRow title="Flavor" fieldId={getId('flavor')} isRequired>
             <FormSelect

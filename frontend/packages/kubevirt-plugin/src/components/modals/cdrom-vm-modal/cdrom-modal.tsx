@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as _ from 'lodash';
-import { Form, Button, Tooltip, Alert, Text, TextVariants } from '@patternfly/react-core';
+import { Form, Button, Tooltip, Text, TextVariants } from '@patternfly/react-core';
 import {
   FirehoseResult,
   HandlePromiseProps,
@@ -30,6 +30,7 @@ import './cdrom-modal.scss';
 import { CD, CDMap } from './types';
 import { VMKind } from '../../../types/vm';
 import { useStorageClassConfigMap } from '../../../hooks/storage-class-config-map';
+import { pendingChangesAlert } from '../../vms/utils';
 
 export const AddCDButton = ({ className, text, onClick, isDisabled }: AddCDButtonProps) => (
   <div className={className}>
@@ -117,11 +118,9 @@ export const CDRomModal = withHandlePromise((props: CDRomModalProps) => {
     );
 
   const [cds, setCDs] = React.useState<CDMap>(mapCDsToSource(getCDRoms(vm)));
-  const [showRestartAlert, setShowRestartAlert] = React.useState<boolean>(false);
   const [shouldPatch, setShouldPatch] = React.useState<boolean>(false);
 
   const onCDChange = (cdName: string, key: string, value: string) => {
-    setShowRestartAlert(true);
     setShouldPatch(true);
     const cd = { ...cds[cdName], [key]: value };
     if (key === StorageType.URL) {
@@ -142,7 +141,6 @@ export const CDRomModal = withHandlePromise((props: CDRomModalProps) => {
       name,
       newCD: true,
     };
-    setShowRestartAlert(true);
     setShouldPatch(true);
     setCDs({ ...cds, [name]: newCD });
   };
@@ -179,13 +177,7 @@ export const CDRomModal = withHandlePromise((props: CDRomModalProps) => {
     <div className="modal-content">
       <ModalTitle>Edit CD-ROMs</ModalTitle>
       <ModalBody>
-        {showRestartAlert && isVMRunningOrExpectedRunning(vm) && (
-          <Alert
-            variant="info"
-            isInline
-            title="Changes will be applied when the virtual machine has been restarted"
-          />
-        )}
+        {isVMRunningOrExpectedRunning(vm) && pendingChangesAlert()}
         <Form className="pf-l-grid pf-m-gutter">
           {_.size(cds) > 0 ? (
             cdsValue.map((cd, i) => (

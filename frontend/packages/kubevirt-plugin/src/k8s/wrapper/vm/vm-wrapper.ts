@@ -17,7 +17,6 @@ import {
 } from '../../../selectors/vm/selectors';
 import { VMWizardNetwork, VMWizardStorage } from '../../../components/create-vm-wizard/types';
 import { VMILikeMethods } from './types';
-import { transformDevices } from '../../../selectors/vm';
 import { findKeySuffixValue } from '../../../selectors/utils';
 import {
   TEMPLATE_FLAVOR_LABEL,
@@ -31,6 +30,7 @@ import { V1Volume } from '../../../types/vm/disk/V1Volume';
 import { V1alpha1DataVolume } from '../../../types/vm/disk/V1alpha1DataVolume';
 import { VirtualMachineImportModel, VirtualMachineModel } from '../../../models';
 import { buildOwnerReferenceForModel } from '../../../utils';
+import { transformDevices } from '../../../selectors/vm/devices';
 
 export class VMWrapper extends K8sResourceWrapper<VMKind, VMWrapper> implements VMILikeMethods {
   constructor(vm?: VMKind | VMWrapper | any, copy = false) {
@@ -38,6 +38,8 @@ export class VMWrapper extends K8sResourceWrapper<VMKind, VMWrapper> implements 
   }
 
   hasTemplateLabel = (label: string) => _.has(this.getTemplateLabels(null), label);
+
+  getVMObj = () => this.data;
 
   getOperatingSystem = () => findKeySuffixValue(this.getLabels(), TEMPLATE_OS_LABEL);
   getWorkloadProfile = () => findKeySuffixValue(this.getLabels(), TEMPLATE_WORKLOAD_LABEL);
