@@ -7,7 +7,7 @@ import { getVMIPVCSourceByDisk } from '../../selectors/vmi/selectors';
 import { BootableDeviceType } from '../../types/types';
 import { IsPendingChange } from './types';
 import { VMKind, VMIKind } from '../../types/vm';
-import { Alert, AlertVariant } from '@patternfly/react-core';
+import { Alert, AlertVariant, Button } from '@patternfly/react-core';
 
 import './utils.scss';
 import { MODAL_RESTART_IS_REQUIRED } from '../../strings/vm/status';
@@ -89,13 +89,18 @@ export const detectNextRunChanges = (vm: VMKind, vmi: VMIKind) => {
   };
 };
 
-export const pendingChangesAlert = () => (
+export const pendingChangesAlert = (clearChanges: () => void) => (
   <Alert
     title="Pending Changes"
     isInline
     variant={AlertVariant.info}
     className="kubevirt-vm-details__restart_required-class-alert"
   >
-    {MODAL_RESTART_IS_REQUIRED}
+    <div>{MODAL_RESTART_IS_REQUIRED}</div>
+    <div>
+      <Button variant="link" isInline onClick={() => clearChanges()}>
+        Clear changes
+      </Button>
+    </div>
   </Alert>
 );

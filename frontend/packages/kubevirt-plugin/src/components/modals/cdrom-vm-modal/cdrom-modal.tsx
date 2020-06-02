@@ -177,7 +177,7 @@ export const CDRomModal = withHandlePromise((props: CDRomModalProps) => {
     <div className="modal-content">
       <ModalTitle>Edit CD-ROMs</ModalTitle>
       <ModalBody>
-        {isVMRunningOrExpectedRunning(vm) && pendingChangesAlert()}
+        {isVMRunningOrExpectedRunning(vm) && pendingChangesAlert(() => {})}
         <Form className="pf-l-grid pf-m-gutter">
           {_.size(cds) > 0 ? (
             cdsValue.map((cd, i) => (

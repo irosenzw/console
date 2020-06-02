@@ -15,7 +15,7 @@ import {
   ModalTitle,
 } from '@console/internal/components/factory';
 import { k8sPatch, TemplateKind } from '@console/internal/module/k8s';
-import { VMLikeEntityKind } from '../../../types/vmLike';
+import { VMLikeEntityKind, VMGenericLikeEntityKind } from '../../../types/vmLike';
 import {
   asVM,
   getCPU,
@@ -42,6 +42,9 @@ import { getTemplateFlavors } from '../../../selectors/vm-template/advanced';
 import { getVMTemplateNamespacedName } from '../../../selectors/vm-template/selectors';
 import { toUIFlavor, isCustomFlavor } from '../../../selectors/vm-like/flavor';
 import { pendingChangesAlert } from '../../vms/utils';
+import { VirtualMachineInstanceModel } from '../../../models/index';
+import { getName, getNamespace } from '../../../../../console-shared/src/selectors/common';
+import { VMIKind } from 'packages/kubevirt-plugin/src/types';
 
 const getId = (field: string) => `vm-flavor-modal-${field}`;
 
@@ -53,10 +56,22 @@ const getAvailableFlavors = (template: TemplateKind) => {
 };
 
 const VMFlavorModal = withHandlePromise((props: VMFlavornModalProps) => {
-  const { vmLike, template, errorMessage, handlePromise, close, cancel, loadError, loaded } = props;
+  const {
+    vmLike,
+    vmi,
+    template,
+    errorMessage,
+    handlePromise,
+    close,
+    cancel,
+    loadError,
+    loaded,
+  } = props;
   const inProgress = props.inProgress || !loaded;
   const vm = asVM(vmLike);
   const underlyingTemplate = getLoadedData(template);
+  const vmiObj = !vmi ? getLoadedData(vmi) : null;
+  console.log('vmi:', vmiObj);
 
   const flavors = getAvailableFlavors(underlyingTemplate);
   const vmFlavor = toUIFlavor(getFlavor(vmLike) || flavors[flavors.length - 1]);
@@ -111,7 +126,7 @@ const VMFlavorModal = withHandlePromise((props: VMFlavornModalProps) => {
     <div className="modal-content">
       <ModalTitle>Edit Flavor</ModalTitle>
       <ModalBody>
-        {isVMRunningOrExpectedRunning(vm) && pendingChangesAlert()}
+        {isVMRunningOrExpectedRunning(vm) && pendingChangesAlert(() => {})}
         <Form>
           <FormRow title="Flavor" fieldId={getId('flavor')} isRequired>
             <FormSelect
@@ -196,6 +211,7 @@ const VMFlavorModalFirehose = (props) => {
   const { vmLike } = props;
   const resources = [];
   const underlyingTemplate = getVMTemplateNamespacedName(vmLike);
+  const isVMRunning = isVMRunningOrExpectedRunning(asVM(vmLike));
 
   if (underlyingTemplate) {
     resources.push({
@@ -205,6 +221,17 @@ const VMFlavorModalFirehose = (props) => {
       namespace: underlyingTemplate.namespace,
       isList: false,
       prop: 'template',
+    });
+  }
+
+  if (isVMRunning) {
+    resources.push({
+      kind: VirtualMachineInstanceModel.kind,
+      model: VirtualMachineInstanceModel,
+      name: getName(vmLike),
+      namespace: getNamespace(vmLike),
+      isList: false,
+      prop: 'vmi',
     });
   }
   return (
@@ -218,6 +245,7 @@ export type VMFlavornModalProps = HandlePromiseProps &
   ModalComponentProps & {
     vmLike: VMLikeEntityKind;
     template?: FirehoseResult<TemplateKind>;
+    vmi?: FirehoseResult<VMIKind>;
     loadError?: any;
     loaded: boolean;
   };
