@@ -55,7 +55,6 @@ describe('Create VM from Template using wizard', () => {
             .setNamespace(testName)
             .setDescription(`VM from template ${vmt.name}`)
             .setFlavor(flavorConfigs.Tiny)
-            .setTemplate(vmt.name)
             .setDisks(vmt.getData().disks)
             .build();
           await withResource(leakedResources, vm.asResource(), async () => {
@@ -129,7 +128,6 @@ describe('Create VM from Template using wizard', () => {
         .setName('vm-from-vmt-detail')
         .setNamespace(testName)
         .setFlavor(flavorConfigs.Tiny)
-        .setTemplate(vmTemplate.name)
         .build();
 
       await vmTemplate.action(VMT_ACTION.Create);

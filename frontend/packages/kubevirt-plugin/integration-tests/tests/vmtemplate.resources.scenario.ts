@@ -15,10 +15,7 @@ describe('Test adding/removing discs/nics to/from a VM template', () => {
     .setProvisionSource(provisionSources.Container)
     .build();
 
-  const vm = new VMBuilder(getBasicVMBuilder())
-    .setTemplate(vmt.name)
-    .setName('from-template')
-    .build();
+  const vm = new VMBuilder(getBasicVMBuilder()).setName('from-template').build();
 
   beforeAll(async () => {
     createResource(multusNAD);
