@@ -16,13 +16,8 @@ import {
   deepFreeze,
 } from '../utils/utils';
 import { Flavor, ProvisionSource, ProvisionSourceItem } from '../utils/constants/wizard';
-import {
-  NIC_MODEL,
-  NIC_TYPE,
-  DISK_INTERFACE,
-  DISK_SOURCE,
-  DISK_DRIVE,
-} from '../utils/constants/vm';
+import { NIC_MODEL, NIC_TYPE, DISK_INTERFACE, DISK_DRIVE } from '../utils/constants/vm';
+import { DiskSourceLabel } from '../../../src/components/modals/disk-modal/types';
 
 export const provisionSources = {
   [ProvisionSource.URL]: {
@@ -117,7 +112,7 @@ export const getDiskToCloneFrom = (): Disk => {
       PVCName: testDV.metadata.name,
       PVCNamespace: testName,
     },
-    source: DISK_SOURCE.AttachClonedDisk,
+    source: DiskSourceLabel.AttachClonedDisk,
   };
 };
 
@@ -169,7 +164,7 @@ export const containerRootDisk: Disk = {
 deepFreeze(containerRootDisk);
 
 export const cdGuestTools: Disk = {
-  source: DISK_SOURCE.Container,
+  source: DiskSourceLabel.Container,
   interface: DISK_INTERFACE.sata,
   drive: DISK_DRIVE.CDROM,
   storageClass: `${STORAGE_CLASS}`,

@@ -8,16 +8,17 @@ import {
 import * as view from '../../views/dialogs/diskDialog.view';
 import { modalSubmitButton, saveButton } from '../../views/kubevirtUIResource.view';
 import { Disk, DiskSourceConfig } from '../types/types';
-import { diskAccessMode, DISK_SOURCE } from '../utils/constants/vm';
+import { diskAccessMode } from '../utils/constants/vm';
 import { waitForNoLoaders, modalCancelButton } from '../../views/wizard.view';
 import { browser, ExpectedConditions as until, $ } from 'protractor';
+import { DiskSourceLabel } from '../../../src/components/modals/disk-modal/types';
 
 export class DiskDialog {
   sourceMethods = {
-    [DISK_SOURCE.AttachClonedDisk]: DiskDialog.selectSourceAttachClonedDisk,
-    [DISK_SOURCE.AttachDisk]: DiskDialog.selectSourceAttachDisk,
-    [DISK_SOURCE.Container]: DiskDialog.fillContainer,
-    [DISK_SOURCE.Url]: DiskDialog.fillURL,
+    [DiskSourceLabel.AttachClonedDisk]: DiskDialog.selectSourceAttachClonedDisk,
+    [DiskSourceLabel.AttachDisk]: DiskDialog.selectSourceAttachDisk,
+    [DiskSourceLabel.Container]: DiskDialog.fillContainer,
+    [DiskSourceLabel.URL]: DiskDialog.fillURL,
   };
 
   static async selectSourceAttachDisk(sourceConfig: DiskSourceConfig) {
@@ -105,7 +106,7 @@ export class DiskDialog {
     if (disk.source) {
       await selectItemFromDropdown(view.diskSource, view.diskDropDownItem(disk.source));
     } else {
-      await selectItemFromDropdown(view.diskSource, view.diskDropDownItem(DISK_SOURCE.Blank));
+      await selectItemFromDropdown(view.diskSource, view.diskDropDownItem(DiskSourceLabel.Blank));
     }
 
     if (this.sourceMethods[disk.source] !== undefined) {

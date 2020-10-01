@@ -69,13 +69,6 @@ export const networkTabCol = {
 Object.freeze(networkTabCol);
 
 // Storage
-export enum DISK_SOURCE {
-  AttachDisk = 'Use an existing PVC',
-  AttachClonedDisk = 'Clone an existing PVC',
-  Blank = 'Blank',
-  Container = 'Container',
-  Url = 'Upload via URL',
-}
 
 export enum DISK_DRIVE {
   Disk = 'Disk',

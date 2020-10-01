@@ -3,6 +3,7 @@ import { ObjectEnum, VolumeType } from '../../../constants';
 import { DataVolumeSourceType, DiskType } from '../../../constants/vm/storage';
 import { getStringEnumValues } from '../../../utils/types';
 import { BinaryUnit } from '../../form/size-unit-utils';
+import { DiskSourceLabel, DiskSourceTitle } from './types';
 import {
   UI_SOURCE_ATTACH_CLONED_DISK_DESC,
   UI_SOURCE_ATTACH_DISK_DESC,
@@ -18,75 +19,77 @@ import {
 
 export class StorageUISource extends SelectDropdownObjectEnum<string> {
   static readonly BLANK = new StorageUISource(
-    'Blank',
+    DiskSourceTitle.Blank,
     {
       volumeType: VolumeType.DATA_VOLUME,
       dataVolumeSourceType: DataVolumeSourceType.BLANK,
     },
     {
+      label: DiskSourceLabel.Blank,
       description: UI_SOURCE_BLANK_DESC,
       order: 1,
     },
   );
   static readonly URL = new StorageUISource(
-    'URL',
+    DiskSourceTitle.URL,
     {
       volumeType: VolumeType.DATA_VOLUME,
       dataVolumeSourceType: DataVolumeSourceType.HTTP,
     },
     {
-      label: 'Upload via URL',
+      label: DiskSourceLabel.URL,
       description: UI_SOURCE_URL_DESC,
       order: 2,
     },
   );
   static readonly CONTAINER = new StorageUISource(
-    'Container',
+    DiskSourceTitle.Container,
     {
       volumeType: VolumeType.CONTAINER_DISK,
     },
     {
+      label: DiskSourceLabel.Container,
       description: UI_SOURCE_CONTAINER_DESC,
       order: 6,
     },
   );
   static readonly ATTACH_CLONED_DISK = new StorageUISource(
-    'Attach Cloned Disk',
+    DiskSourceTitle.AttachClonedDisk,
     {
       volumeType: VolumeType.DATA_VOLUME,
       dataVolumeSourceType: DataVolumeSourceType.PVC,
     },
     {
-      label: 'Clone an existing PVC',
+      label: DiskSourceLabel.AttachClonedDisk,
       description: UI_SOURCE_ATTACH_CLONED_DISK_DESC,
       order: 4,
     },
   );
   static readonly ATTACH_DISK = new StorageUISource(
-    'Attach Disk',
+    DiskSourceTitle.AttachDisk,
     {
       volumeType: VolumeType.PERSISTENT_VOLUME_CLAIM,
     },
     {
-      label: 'Use an existing PVC',
+      label: DiskSourceLabel.AttachDisk,
       description: UI_SOURCE_ATTACH_DISK_DESC,
       order: 3,
     },
   );
   static readonly IMPORT_DISK = new StorageUISource(
-    'Import Disk',
+    DiskSourceTitle.ImportDisk,
     {
       volumeType: VolumeType.PERSISTENT_VOLUME_CLAIM,
       hasNewPVC: true,
     },
     {
-      label: 'Import an existing PVC',
+      label: DiskSourceLabel.Import,
       description: UI_SOURCE_IMPORT_DISK_DESC,
       order: 7,
     },
   );
 
-  static readonly OTHER = new StorageUISource('Other');
+  static readonly OTHER = new StorageUISource(DiskSourceTitle.Other);
 
   private readonly volumeType: VolumeType;
   private readonly dataVolumeSourceType: DataVolumeSourceType;
